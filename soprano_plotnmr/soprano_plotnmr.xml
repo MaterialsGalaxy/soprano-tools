@@ -1,0 +1,170 @@
+<tool id="soprano_plotnmr" name="Soprano Plot NMR" version="@TOOL_VERSION@+galaxy@WRAPPER_VERSION@" python_template_version="3.5" profile="21.05">
+    <description>Plot the NMR spectrum from a .magres file.</description>
+    <macros>
+        <!-- TODO: Needs a proper versioned release of Soprano before this can be released -->
+        <token name="@TOOL_VERSION@">0.8.13b</token>
+        <token name="@WRAPPER_VERSION@">0</token>
+    </macros>
+    <requirements>
+        <requirement type="package" version="@TOOL_VERSION@">soprano</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        ## #if $xlim_min and $xlim_max:
+        ##     xlim="--xlim '$xlim_min' '$xlim_max'" &&
+        ## #elif $xlim_min or $xlim_max:
+        ##     echo "Both min and max needed" && exit 22 &&
+        ## #end if
+        ln -s '$input' input.magres &&
+        soprano plotnmr
+            --symprec '$symprec'
+            --precision '$precision'
+            #if $isotopes:
+                --isotopes '$isotopes'
+            #end if
+            #if $average_group:
+                --average-group '$average_group'
+            #end if
+            --euler '$euler'
+            #if $references:
+                --references '$references'
+            #end if
+            #if $gradients:
+                --gradients '$gradients'
+            #end if
+            #if $subset:
+                --subset '$subset'
+            #end if
+            $reduce
+            --query '$query'
+            --plot_type '$plot_type'
+            --xelement '$xelement'
+            --yelement '$yelement'
+            --rcut '$rcut'
+            --yaxis-order '$yaxis_order'
+            $shielding
+            #if $plot_options.xlim.xlim == "manual":
+                --xlim '$plot_options.xlim.min' '$plot_options.xlim.max'
+            #end if
+            #if $plot_options.ylim.ylim == "manual":
+                --ylim '$plot_options.ylim.min' '$plot_options.ylim.max'
+            #end if
+            --marker '$plot_options.marker'
+            --max-marker-size '$plot_options.max_marker_size'
+            --scale-marker-by '$plot_options.scale_marker_by'
+            $plot_options.legend
+            $plot_options.diag
+            $plot_options.grid
+            $plot_options.connectors
+            --output plot.$plot_file_format
+            input.magres
+    ]]></command>
+    <inputs>
+        <param name="input" type="data" format="magres,txt" label="Input data"/>
+        <param argument="symprec" type="float" value="0.0001" min="0" label="Symmetry precision" help="Symmetry precision for symmetry reduction."/>
+        <param argument="precision" type="integer" value="3" min="0" label="Output precision" help="Precision of the output (number of decimal places)."/>
+        <param argument="isotopes" type="text" optional="true" label="Isotope" help="Isotopes specification as a comma separated list (e.g. `13C` for carbon 13 `2H,15N` for deuterium and 15N). When nothing is specified it defaults to the most common NMR active isotope."/>
+        <param argument="average-group" type="text" optional="true" label="Average group" help="Group pattern for averaging as a comma separated list. Currently only works for XHn groups such as CH3, CH2, NH2 etc. (e.g. `CH3,CH2,NH2`). If not specified, no averaging is performed."/>
+        <param argument="euler" type="select" display="radio" label="Euler angles" help="Convention for Euler angles.">
+            <option value="zyz" selected="true">ZYZ</option>
+            <option value="zxz">ZXZ</option>
+        </param>
+        <param argument="references" type="text" label="Reference shielding" optional="true" help="Reference shielding for each element (in ppm). Format is comma separated list of entries, with the element and ppm separated by a colon. E.G. `C:170,H:123`."/>
+        <param argument="gradients" type="text" label="Reference shielding gradients" optional="true" help="Reference shielding gradients for each element. If unset, will default to -1 for all elements. Format is comma separated list of entries, with the element and gradient separated by a colon. E.G. `H:-1,C:-0.97`."/>
+        <param argument="subset" type="text" label="Selection subset" optional="true" help="Selection string of subset of sites include. Format is comma separated list of sites, either identifying element (e.g. `C`), position (e.g. `C.1-3,H.1.2`) or label (e.g. `C1,H1a,H1b`)."/>
+        <param argument="reduce" type="boolean" truevalue="--reduce" falsevalue="--no-reduce" checked="true" label="Reduce" help="Reduce the output by symmetry-equivalent sites. If there are CIF-style labels present, then these override the symmetry-grouping in case of a clash (though there should never be a clash...). Note that this doesn't take into account magnetic symmetry!"/>
+        <!-- TODO: How is a user supposed to know what columns are available? -->
+        <param argument="query" type="text" label="Filter query" optional="true" help="Filter results based on query. The filter is specified as a pandas query. Refer to the column names without the units. For example `MS_shielding &gt; 100`. You can combine queries with `and` and `or` etc. e.g. `MS_shielding &gt; 100 and MS_shielding &lt; 180`."/>
+        <param argument="plot_type" type="select" display="radio" label="Plot type">
+            <!-- TODO: check default -->
+            <option value="1D" selected="true">1D</option>
+            <option value="2D">2D</option>
+        </param>
+        <param argument="xelement" type="text" label="X-element" help="Element to plot on the x-axis."/>
+        <!-- TODO: this should only appear if 2D selected? -->
+        <param argument="yelement" type="text" optional="true" label="Y-element" help="Element to plot on the y-axis. If not specified but a 2D plot is requested, the X-element is used."/>
+        <param argument="rcut" type="float" value="10" min="0" label="Cut-off distance" help="Cut-off distance for plotting, in Angstrom."/>
+        <!-- TODO: when is this relevant? Always or only for 1D/2D case? -->
+        <param argument="yaxis-order" type="select" display="radio" label="Y-axis order" help="Single (1Q) or double (2Q) quantum order for the y-axis.">
+            <option value="1Q" selected="true">1Q</option>
+            <option value="2Q">2Q</option>
+        </param>
+        <param argument="shielding" type="boolean" checked="false" truevalue="--shielding" falsevalue="" label="Shielding" help="Force plot shielding (even if references are present). Default is to plot shifts if references are given but shielding if no references given."/>
+        <section name="plot_options" title="Plot options">
+            <conditional name="xlim">
+                <param name="xlim" type="select" display="radio" label="X-limits">
+                    <option value="default" selected="true">Default</option>
+                    <option value="manual">Manual</option>
+                </param>
+                <when value="default"/>
+                <when value="manual">
+                    <param name="min" value="0" type="float" label="X-axis range minimum"/>
+                    <param name="max" value="0" type="float" label="X-axis range maximum"/>
+                </when>
+            </conditional>
+            <conditional name="ylim">
+                <param name="ylim" type="select" display="radio" label="Y-limits">
+                    <option value="default" selected="true">Default</option>
+                    <option value="manual">Manual</option>
+                </param>
+                <when value="default"/>
+                <when value="manual">
+                    <param name="min" value="0" type="float" label="Y-axis range minimum"/>
+                    <param name="max" value="0" type="float" label="Y-axis range maximum"/>
+                </when>
+            </conditional>
+            <param argument="marker" type="text" value="x" label="Marker type" help="Accepts any matplotlib marker type."/>
+            <param argument="max-marker-size" type="float" value="50" label="Maximum marker size"/>
+            <param argument="scale-marker-by" type="select" display="radio" label="Scale marker by" help="Scale marker size by chosen property.">
+                <option value="fixed" selected="true">Fixed</option>
+                <option value="distance">Distance</option>
+                <option value="inversedistance">Inverse distance</option>
+                <option value="dipolar">Dipolar</option>
+            </param>
+            <param argument="legend" type="boolean" checked="true" truevalue="--legend" falsevalue="--no-legend" label="Legend" help="Show marker legend."/>
+            <param argument="diag" type="boolean" checked="true" truevalue="--diag" falsevalue="--no-diag" label="Plot diagonal" help="Plot diagonal line if the x and y elements are the same."/>
+            <param argument="grid" type="boolean" checked="true" truevalue="--grid" falsevalue="--no-grid" label="Grid lines" help="Show grid lines at the axis ticks."/>
+            <!-- TODO: this should only appear if 2Q selected? -->
+            <param argument="connectors" type="boolean" checked="true" truevalue="--connectors" falsevalue="--no-connectors" label="Connectors" help="Show horizontal connectors between points in the case of a 2Q plot."/>
+            <param argument="ticklabels" type="boolean" checked="true" truevalue="--ticklabels" falsevalue="--no-ticklabels" label="Tick labels" help="Show tick labels."/>
+            <param name="plot_file_format" type="select" display="radio" label="Plot file format" help="File format/extension to use for the output plot.">
+                <!-- Actual list of supported formats (from matplotlib) -->
+                <!-- eps, jpeg, jpg, pdf, pgf, png, ps, raw, rgba, svg, svgz, tif, tiff, webp -->
+                <option value="png" selected="true">PNG</option>
+                <option value="svg">SVG</option>
+            </param>
+        </section>
+    </inputs>
+    <outputs>
+        <data name="plot_png" from_work_dir="plot.png" format="png" label="${tool.name} (PNG) on ${on_string}">
+            <filter>plot_options["plot_file_format"] == "png"</filter>
+        </data>
+        <data name="plot_svg" from_work_dir="plot.svg" format="svg" label="${tool.name} (SVG) on ${on_string}">
+            <filter>plot_options["plot_file_format"] == "svg"</filter>
+        </data>
+    </outputs>
+    <tests>
+        <test expect_num_outputs="1">
+            <param name="input" value="ethanol.magres" ftype="txt"/>
+            <param name="xelement" value="H"/>
+            <output name="plot_png">
+                <assert_contents>
+                    <has_size value="12200" delta="100"/>
+                </assert_contents>
+            </output>
+        </test>
+        <test expect_num_outputs="1">
+            <param name="input" value="ethanol.magres" ftype="txt"/>
+            <param name="xelement" value="H"/>
+            <param name="plot_file_format" value="svg"/>
+            <!-- Allow lines_diff for date and (random) uids -->
+            <output name="plot_png" file="defaults.svg" compare="diff" lines_diff="32"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+        Usage: `soprano plotnmr [OPTIONS] [FILES]...`
+
+        Plot the NMR spectrum from a .magres file.
+
+        This work was facilitated by software tools (specifically Soprano) developed by the Collaborative Computing Project for NMR Crystallography, funded by EPSRC grant EP/T026642/1.
+    ]]></help>
+</tool>
