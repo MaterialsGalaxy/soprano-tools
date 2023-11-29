@@ -5,15 +5,13 @@
         <token name="@TOOL_VERSION@">0.8.13b</token>
         <token name="@WRAPPER_VERSION@">0</token>
     </macros>
+    <creator>
+        <person givenName="Patrick" familyName="Austin" url="https://github.com/patrick-austin" identifier="https://orcid.org/0000-0002-6279-7823"/>
+    </creator>
     <requirements>
         <requirement type="package" version="@TOOL_VERSION@">soprano</requirement>
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
-        ## #if $xlim_min and $xlim_max:
-        ##     xlim="--xlim '$xlim_min' '$xlim_max'" &&
-        ## #elif $xlim_min or $xlim_max:
-        ##     echo "Both min and max needed" && exit 22 &&
-        ## #end if
         ln -s '$input' input.magres &&
         soprano plotnmr
             --symprec '$symprec'
@@ -55,7 +53,7 @@
             $plot_options.diag
             $plot_options.grid
             $plot_options.connectors
-            --output plot.$plot_file_format
+            --output plot.$plot_options.plot_file_format
             input.magres
     ]]></command>
     <inputs>
