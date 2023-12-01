@@ -1,0 +1,55 @@
+<macros>
+    <xml name="magres_input">
+        <param name="input" type="data" format="magres,txt" label="Input data"/>
+    </xml>
+    <xml name="magres_merge">
+        <conditional name="merge">
+            <param argument="--merge" type="select" label="Merge behaviour" help="If set will merge all files into a single output. Otherwise, each input will result in a separate output.">
+                <option value="" selected="true">Do not merge</option>
+                <option value="--merge">Merge</option>
+            </param>
+            <when value="">
+                <expand macro="magres_input"/></when>
+            <when value="--merge">
+                <param name="input" type="data" multiple="true" format="magres,txt" label="Input data"/>
+            </when>
+        </conditional>
+    </xml>
+    <!-- Common to all tools -->
+    <xml name="common_options">
+        <param argument="--symprec" type="float" value="0.0001" min="0" label="Symmetry precision" help="Symmetry precision for symmetry reduction."/>
+        <param argument="--precision" type="integer" value="3" min="0" label="Output precision" help="Precision of the output (number of decimal places)."/>
+        <param argument="--isotopes" type="text" optional="true" label="Isotope" help="Isotopes specification as a comma separated list (e.g. `13C` for carbon 13 `2H,15N` for deuterium and 15N). When nothing is specified it defaults to the most common NMR active isotope."/>
+        <param argument="--average-group" type="text" optional="true" label="Average group" help="Group pattern for averaging as a comma separated list. Currently only works for XHn groups such as CH3, CH2, NH2 etc. (e.g. `CH3,CH2,NH2`). If not specified, no averaging is performed."/>
+        <!-- TODO: How is a user supposed to know what columns are available? -->
+        <param argument="--query" type="text" label="Filter query" optional="true" help="Filter results based on query. The filter is specified as a pandas query. Refer to the column names without the units. For example `MS_shielding &gt; 100`. You can combine queries with `and` and `or` etc. e.g. `MS_shielding &gt; 100 and MS_shielding &lt; 180`."/>
+    </xml>
+    <!-- Common to nmr, plotnmr -->
+    <xml name="common_options_nmr">
+        <param argument="--euler" type="select" display="radio" label="Euler angles" help="Convention for Euler angles.">
+            <option value="zyz" selected="true">ZYZ</option>
+            <option value="zxz">ZXZ</option>
+        </param>
+        <param argument="--references" type="text" label="Reference shielding" optional="true" help="Reference shielding for each element (in ppm). Format is comma separated list of entries, with the element and ppm separated by a colon. E.G. `C:170,H:123`."/>
+        <param argument="--gradients" type="text" label="Reference shielding gradients" optional="true" help="Reference shielding gradients for each element. If unset, will default to -1 for all elements. Format is comma separated list of entries, with the element and gradient separated by a colon. E.G. `H:-1,C:-0.97`."/>
+        <param argument="--subset" type="text" label="Selection subset" optional="true" help="Selection string of subset of sites include. Format is comma separated list of sites, either identifying element (e.g. `C`), position (e.g. `C.1-3,H.1.2`) or label (e.g. `C1,H1a,H1b`)."/>
+        <param argument="--reduce" type="boolean" truevalue="--reduce" falsevalue="--no-reduce" checked="true" label="Reduce" help="Reduce the output by symmetry-equivalent sites. If there are CIF-style labels present, then these override the symmetry-grouping in case of a clash (though there should never be a clash...). Note that this doesn't take into account magnetic symmetry!"/>
+    </xml>
+    <!-- Common to nmr, dipolar -->
+    <xml name="common_options_table">
+        <param argument="--sortby" type="text" optional="true" label="Sort by" help="Column to sort by. If unset, will sort by site number"/>
+        <param argument="--sort-order" type="boolean" truevalue="ascending" falsevalue="descending" checked="true" label="Sort ascending" help="If set will sort ascending, otherwise will sort descending."/>
+        <param argument="--include" type="text" optional="true" label="Include" help="Include only certain columns, specified as a comma-separated list. If unset, all columns are included."/>
+        <param argument="--exclude" type="text" optional="true" label="Exclude" help="Exclude only certain columns, specified as a comma-separated list. If unset, no columns are excluded."/>
+        <param argument="--output-format" type="select" display="radio" label="Output format" help="File format/extension to use for the output.">
+            <!-- Actual list of supported formats -->
+            <!-- csv | json | html | md | tex | txt | tsv | dat -->
+            <!--  txt, tsv and dat formats all produce tab separated files -->
+            <option value="csv" selected="true">CSV</option>
+            <option value="tsv">TSV</option>
+            <option value="json">JSON</option>
+            <option value="html">HTML</option>
+            <option value="tex">TeX</option>
+        </param>
+    </xml>
+</macros>

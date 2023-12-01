@@ -1,0 +1,121 @@
+<tool id="soprano_nmr" name="Soprano NMR" version="@TOOL_VERSION@+galaxy@WRAPPER_VERSION@" python_template_version="3.5" profile="21.05">
+    <description>Extract and analyse NMR data from a .magres file.</description>
+    <macros>
+        <!-- TODO: Needs a proper versioned release of Soprano before this can be released -->
+        <token name="@TOOL_VERSION@">0.8.13b</token>
+        <token name="@WRAPPER_VERSION@">0</token>
+        <import>macros.xml</import>
+    </macros>
+    <creator>
+        <person givenName="Patrick" familyName="Austin" url="https://github.com/patrick-austin" identifier="https://orcid.org/0000-0002-6279-7823"/>
+    </creator>
+    <requirements>
+        <requirement type="package" version="@TOOL_VERSION@">soprano</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        #if $merge.merge:
+            #for i, file in enumerate($merge.input):
+                ln -s '$file' '$i'.magres &&
+            #end for
+        #else:
+            ln -s '$merge.input' input.magres &&
+        #end if
+        soprano nmr
+            $merge.merge
+            #for property in $properties:
+                --properties $property
+            #end for
+            --symprec '$symprec'
+            --precision '$precision'
+            #if $isotopes:
+                --isotopes '$isotopes'
+            #end if
+            #if $average_group:
+                --average-group '$average_group'
+            #end if
+            --euler '$euler'
+            #if $references:
+                --references '$references'
+            #end if
+            #if $gradients:
+                --gradients '$gradients'
+            #end if
+            #if $subset:
+                --subset '$subset'
+            #end if
+            $reduce
+            --query '$query'
+            #if $sortby:
+                --sortby '$sortby'
+            #end if
+            --sort-order '$sort_order'
+            #if $include:
+                --include '$include'
+            #end if
+            #if $exclude:
+                --exclude '$exclude'
+            #end if
+            --output-format '$output_format'
+            --output $output
+            *.magres
+    ]]></command>
+    <inputs>
+        <expand macro="magres_merge"/>
+        <param argument="--properties" type="select" multiple="true" optional="false" label="Properties" help="Properties for which to extract and summarise.">
+            <option value="ms" selected="true">ms</option>
+            <option value="efg" selected="true">efg</option>
+        </param>
+        <expand macro="common_options"/>
+        <expand macro="common_options_nmr"/>
+        <expand macro="common_options_table"/>
+    </inputs>
+    <outputs>
+        <data name="output" auto_format="true"/>
+    </outputs>
+    <tests>
+        <!-- 1: CSV -->
+        <test expect_num_outputs="1">
+            <param name="input" value="ethanol.magres" ftype="txt"/>
+            <output name="output" file="default.csv" compare="diff"/>
+        </test>
+        <!-- 2: TSV -->
+        <test expect_num_outputs="1">
+            <param name="input" value="ethanol.magres" ftype="txt"/>
+            <param name="output_format" value="tsv"/>
+            <output name="output" file="default.tabular" compare="diff"/>
+        </test>
+        <!-- 3: JSON -->
+        <test expect_num_outputs="1">
+            <param name="input" value="ethanol.magres" ftype="txt"/>
+            <param name="output_format" value="json"/>
+            <output name="output" file="default.json" compare="diff"/>
+        </test>
+        <!-- 4: HTML -->
+        <test expect_num_outputs="1">
+            <param name="input" value="ethanol.magres" ftype="txt"/>
+            <param name="output_format" value="html"/>
+            <output name="output" file="default.html" compare="diff"/>
+        </test>
+        <!-- 5: CSV -->
+        <test expect_num_outputs="1">
+            <param name="input" value="ethanol.magres" ftype="txt"/>
+            <param name="output_format" value="tex"/>
+            <output name="output" file="default.tex" compare="diff"/>
+        </test>
+        <!-- 6: merge CSV -->
+        <test expect_num_outputs="1">
+            <param name="merge" value="--merge"/>
+            <param name="input" value="ethanol.magres,ethanol.magres" ftype="txt"/>
+            <output name="output" file="merged.csv" compare="diff"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+        Usage: soprano nmr seedname.magres
+
+        Processes .magres file(s) containing NMR-related properties and prints a summary. It defaults to printing all NMR properties present in the file for all the atoms.
+
+        This work was facilitated by software tools (specifically Soprano) developed by the Collaborative Computing Project for NMR Crystallography, funded by EPSRC grant EP/T026642/1.
+    ]]></help>
+    <!-- TODO: Would be good to have a citation (bibtex/DOI supported) but website doesn't give one -->
+    <citations/>
+</tool>
