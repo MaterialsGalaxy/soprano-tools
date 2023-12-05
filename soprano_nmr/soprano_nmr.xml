@@ -44,7 +44,9 @@
                 --subset '$subset'
             #end if
             $reduce
-            --query '$query'
+            #if $query:
+                --query '$query.replace("__gt__", ">").replace("__lt__", "<")'
+            #end if
             #if $sortby:
                 --sortby '$sortby'
             #end if
