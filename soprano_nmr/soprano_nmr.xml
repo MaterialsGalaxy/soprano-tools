@@ -76,6 +76,8 @@
         </param>
         <expand macro="common_options"/>
         <expand macro="common_options_nmr"/>
+        <param argument="--references" type="text" label="Reference shielding" optional="true" help="Reference shielding for each element (in ppm). Format is comma separated list of entries, with the element and ppm separated by a colon. E.G. `C:170,H:123`."/>
+        <param argument="--gradients" type="text" label="Reference shielding gradients" optional="true" help="Reference shielding gradients for each element. If unset, will default to -1 for all elements. Format is comma separated list of entries, with the element and gradient separated by a colon. E.G. `H:-1,C:-0.97`."/>
         <expand macro="common_options_table"/>
     </inputs>
     <outputs>
