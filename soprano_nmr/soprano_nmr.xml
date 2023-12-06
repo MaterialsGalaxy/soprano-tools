@@ -60,7 +60,14 @@
             *.magres
     ]]></command>
     <inputs>
-        <expand macro="magres_merge"/>
+        <conditional name="merge">
+            <expand macro="merge"/>
+            <when value="">
+                <expand macro="magres_input"/></when>
+            <when value="--merge">
+                <param name="input" type="data" multiple="true" format="magres,txt" label="Input data"/>
+            </when>
+        </conditional>
         <param argument="--properties" type="select" multiple="true" optional="false" label="Properties" help="Properties for which to extract and summarise.">
             <option value="ms" selected="true">ms</option>
             <option value="efg" selected="true">efg</option>

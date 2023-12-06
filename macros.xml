@@ -2,18 +2,11 @@
     <xml name="magres_input">
         <param name="input" type="data" format="magres,txt" label="Input data"/>
     </xml>
-    <xml name="magres_merge">
-        <conditional name="merge">
-            <param argument="--merge" type="select" label="Merge behaviour" help="If set will merge all files into a single output. Otherwise, each input will result in a separate output.">
-                <option value="" selected="true">Do not merge</option>
-                <option value="--merge">Merge</option>
-            </param>
-            <when value="">
-                <expand macro="magres_input"/></when>
-            <when value="--merge">
-                <param name="input" type="data" multiple="true" format="magres,txt" label="Input data"/>
-            </when>
-        </conditional>
+    <xml name="merge">
+        <param argument="--merge" type="select" label="Merge behaviour" help="If set will merge all files into a single output. Otherwise, each input will result in a separate output.">
+            <option value="" selected="true">Do not merge</option>
+            <option value="--merge">Merge</option>
+        </param>
     </xml>
     <!-- Common to all tools -->
     <xml name="common_options">

@@ -161,3 +161,4 @@ cython_debug/
 
 # Test outputs
 tool_test_output.*
+.vscode
