@@ -155,7 +155,9 @@
                 --subset '$subset'
             #end if
             $reduce
-            --query '$query'
+            #if $query:
+                --query '$query.replace("__gt__", ">").replace("__lt__", "<")'
+            #end if
             --plot_type 2D
             #if $isonuclear.isonuclear == "isonuclear":
                 --xelement '$isonuclear.xelement'
@@ -310,12 +312,13 @@
             <!-- Allow lines_diff for date and (random) uids -->
             <output name="plot_png" file="defaults.svg" compare="diff" lines_diff="70"/>
         </test>
-        <!-- 3: isonuclear output -->
+        <!-- 3: Query parameters replaced -->
         <test expect_num_outputs="1">
             <param name="input" value="ethanol.magres" ftype="txt"/>
             <param name="isonuclear" value="isonuclear"/>
             <param name="xelement" value="C"/>
             <param name="x_reference" value="170"/>
+            <param name="query" value="MS_shielding &gt; 100 and MS_shielding &lt; 180"/>
             <output name="plot_png">
                 <assert_contents>
                     <has_size value="68800" delta="100"/>
